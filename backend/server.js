@@ -7,7 +7,27 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const { sequelize } = require('./models');
-const logger = require('./utils/logger');
+
+// Safe logger setup – fallback to console if utils/logger is missing
+let logger;
+try {
+  logger = require('./utils/logger');
+  console.log('[INFO] Custom logger loaded successfully');
+} catch (err) {
+  console.warn('[WARN] Failed to load ./utils/logger – using console fallback');
+  logger = {
+    info: (msg) => console.log(`[INFO] ${msg}`),
+    warn: (msg) => console.warn(`[WARN] ${msg}`),
+    error: (msg, error) => {
+      console.error(`[ERROR] ${msg}`);
+      if (error) console.error(error);
+    },
+    stream: {
+      write: (message) => console.log(message.trim())
+    }
+  };
+}
+
 const { startBackupSchedule } = require('./services/backup');
 
 // Import routes
